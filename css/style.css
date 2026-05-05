@@ -54,6 +54,25 @@ header h1 {
 header .subtitle {
   font-size: 12px;
   color: var(--text-dim);
+  flex: 1;
+}
+
+header .repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+header .repo-link:hover {
+  color: var(--text-bright);
+  border-color: var(--accent-dim);
 }
 
 .columns {
