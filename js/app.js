@@ -20,12 +20,12 @@ const FILTER_LABELS = {
 };
 
 // ── State ──
-let inputMode      = 'upload';  // 'upload' | 'paste'
-let currentPreset  = 'medium';
-let customPatterns = [];
-let ignoredSpeakers = [];       // [{key, label}, ...]
-let lastResult     = null;
-let droppedFile    = null;      // file from drag-and-drop
+let inputMode       = 'upload';  // 'upload' | 'paste'
+let currentPreset   = 'medium';
+let customPatterns  = [];
+let ignoredSpeakers = [];        // [{key, label}, ...]
+let lastResult      = null;
+let droppedFile     = null;      // file from drag-and-drop
 
 // ── DOM refs ──
 const $ = id => document.getElementById(id);
@@ -41,26 +41,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function bindEvents() {
-  // Mode tabs
   $('tab-upload').addEventListener('click', () => setMode('upload'));
   $('tab-paste').addEventListener('click',  () => setMode('paste'));
 
-  // Preset tabs
   document.querySelectorAll('.preset-tab').forEach(btn => {
     btn.addEventListener('click', () => setPreset(btn.dataset.preset));
   });
 
-  // Individual checkbox changes → switch to custom
   document.getElementById('filter-grid').addEventListener('change', e => {
     if (e.target.type === 'checkbox' && e.target.dataset.filter) {
       setPreset('custom', false);
     }
   });
 
-  // File upload zone
   const zone      = $('upload-zone');
   const fileInput = $('file-input');
-
   zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
   zone.addEventListener('drop', e => {
@@ -73,20 +68,14 @@ function bindEvents() {
     if (fileInput.files[0]) { droppedFile = null; handleFileSelect(fileInput.files[0]); }
   });
 
-  // Custom patterns
   $('add-pattern-btn').addEventListener('click', addCustomPattern);
   $('pattern-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') addCustomPattern();
   });
 
-  // Submit
   $('clean-btn').addEventListener('click', submitForm);
-
-  // Copy & Download
   $('copy-btn').addEventListener('click', copyOutput);
   $('download-btn').addEventListener('click', downloadOutput);
-
-  // Ignore selected
   $('ignore-btn').addEventListener('click', ignoreSelected);
 }
 
@@ -112,11 +101,9 @@ function formatBytes(bytes) {
 // ── Preset ──
 function setPreset(preset, applyChecks = true) {
   currentPreset = preset;
-
   document.querySelectorAll('.preset-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === preset);
   });
-
   if (applyChecks && preset !== 'custom') {
     const active = PRESETS[preset] || [];
     document.querySelectorAll('#filter-grid input[type=checkbox][data-filter]').forEach(cb => {
@@ -129,23 +116,15 @@ function setPreset(preset, applyChecks = true) {
 function buildFilterCheckboxes() {
   const grid = $('filter-grid');
   grid.innerHTML = '';
-
   Object.entries(FILTER_LABELS).forEach(([key, label]) => {
     const item = document.createElement('label');
     item.className = 'filter-item';
-    item.innerHTML = `
-      <input type="checkbox" data-filter="${key}">
-      <span class="filter-label">${label}</span>
-    `;
+    item.innerHTML = `<input type="checkbox" data-filter="${key}"><span class="filter-label">${label}</span>`;
     grid.appendChild(item);
   });
-
   const mergeSplitsWrap = document.createElement('label');
   mergeSplitsWrap.className = 'filter-item full-width';
-  mergeSplitsWrap.innerHTML = `
-    <input type="checkbox" id="merge-splits" checked>
-    <span class="filter-label">Merge split posts (same speaker, same minute)</span>
-  `;
+  mergeSplitsWrap.innerHTML = `<input type="checkbox" id="merge-splits" checked><span class="filter-label">Merge split posts (same speaker, same minute)</span>`;
   grid.appendChild(mergeSplitsWrap);
 }
 
@@ -191,8 +170,7 @@ function renderCustomPatterns() {
   list.innerHTML = '';
   customPatterns.forEach((pat, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<span>${escapeHtml(pat)}</span>
-      <button class="btn-remove" title="Remove">×</button>`;
+    li.innerHTML = `<span>${escapeHtml(pat)}</span><button class="btn-remove" title="Remove">x</button>`;
     li.querySelector('.btn-remove').addEventListener('click', () => removeCustomPattern(i));
     list.appendChild(li);
   });
@@ -221,14 +199,11 @@ function renderIgnoredList() {
   const section = $('ignored-section');
   const list    = $('ignored-list');
   if (!section || !list) return;
-
   list.innerHTML = '';
   section.style.display = ignoredSpeakers.length > 0 ? '' : 'none';
-
   ignoredSpeakers.forEach((s, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<span>${escapeHtml(s.label)}</span>
-      <button class="btn-remove" title="Remove">×</button>`;
+    li.innerHTML = `<span>${escapeHtml(s.label)}</span><button class="btn-remove" title="Remove">x</button>`;
     li.querySelector('.btn-remove').addEventListener('click', () => removeIgnored(i));
     list.appendChild(li);
   });
@@ -265,16 +240,15 @@ function updateIgnoreButton() {
 async function submitForm() {
   const btn = $('clean-btn');
   btn.disabled = true;
-
   showLoading();
 
   const formData = new FormData();
-  formData.append('preset',            currentPreset);
-  formData.append('filters',           JSON.stringify(getActiveFilters()));
-  formData.append('custom_filters',    JSON.stringify(customPatterns));
-  formData.append('ignored_speakers',  JSON.stringify(ignoredSpeakers.map(s => s.key)));
-  formData.append('merge_splits',      $('merge-splits')?.checked ? '1' : '0');
-  formData.append('min_posts',         parseInt($('min-posts')?.value, 10) || 2);
+  formData.append('preset',           currentPreset);
+  formData.append('filters',          JSON.stringify(getActiveFilters()));
+  formData.append('custom_filters',   JSON.stringify(customPatterns));
+  formData.append('ignored_speakers', JSON.stringify(ignoredSpeakers.map(s => s.key)));
+  formData.append('merge_splits',     $('merge-splits')?.checked ? '1' : '0');
+  formData.append('min_posts',        parseInt($('min-posts')?.value, 10) || 2);
 
   if (inputMode === 'upload') {
     const file = $('file-input').files[0] || droppedFile;
@@ -299,7 +273,6 @@ async function submitForm() {
   try {
     const resp = await fetch('process.php', { method: 'POST', body: formData });
     const data = await resp.json();
-
     if (!data.success) {
       showToast(data.error || 'Processing failed.');
       showEmpty();
@@ -320,23 +293,17 @@ function renderResults(data) {
   $('empty-state').style.display  = 'none';
   $('results-wrap').style.display = 'flex';
 
-  // Stats bar
   const stats = data.stats;
-  $('stat-duration').textContent    = formatMinutes(stats.duration_minutes);
+  $('stat-duration').textContent     = formatMinutes(stats.duration_minutes);
   $('stat-participants').textContent = stats.participants.length;
-  $('stat-posts').textContent       = stats.participants.reduce((a, p) => a + p.post_count, 0);
+  $('stat-posts').textContent        = stats.participants.reduce((a, p) => a + p.post_count, 0);
 
-  // Summary block
   renderSummaryBlock(data);
-
-  // Log output with syntax highlights + per-speaker anchors
-  renderLog(data.cleaned_log, data.stats.participants);
+  renderLog(data.cleaned_log, stats.participants);
 }
 
 function renderSummaryBlock(data) {
   const stats = data.stats;
-
-  // Header text: DATE / TIME / DURATION
   const lines = [];
   if (stats.start) {
     const year = stats.start.slice(0, 4);
@@ -344,15 +311,10 @@ function renderSummaryBlock(data) {
       const d = stats.start.slice(0, 10).split('-');
       lines.push('DATE: ' + d[2] + '/' + d[1] + '/' + d[0]);
     }
-    const t1 = stats.start.slice(11, 16);
-    const t2 = stats.end ? stats.end.slice(11, 16) : '?';
-    lines.push('TIME: ' + t1 + ' – ' + t2);
+    lines.push('TIME: ' + stats.start.slice(11, 16) + ' - ' + (stats.end ? stats.end.slice(11, 16) : '?'));
   }
   lines.push('DURATION: ' + formatDurationLong(stats.duration_minutes));
-
   $('summary-header-pre').textContent = lines.join('\n');
-
-  // Participant table
   renderParticipantTable(stats.participants);
 }
 
@@ -371,7 +333,6 @@ function renderParticipantTable(participants) {
     return;
   }
 
-  // Column header
   const header = document.createElement('div');
   header.className = 'ptable-row ptable-header';
   header.innerHTML =
@@ -382,16 +343,14 @@ function renderParticipantTable(participants) {
     '<span class="ptable-arrived">Arrived</span>';
   table.appendChild(header);
 
-  // Divider
   const divider = document.createElement('div');
   divider.className = 'ptable-divider';
   table.appendChild(divider);
 
-  // Data rows
   participants.forEach(p => {
     const label      = p.username ? p.display_name + ' (' + p.username + ')' : p.display_name;
     const speakerKey = (p.username || p.display_name).toLowerCase();
-    const arrived    = p.first_post ? p.first_post.slice(11, 16) : '—';
+    const arrived    = p.first_post ? p.first_post.slice(11, 16) : '-';
     const est        = formatMinutes(p.duration_minutes);
 
     const row = document.createElement('div');
@@ -437,38 +396,62 @@ function renderParticipantTable(participants) {
   updateIgnoreButton();
 }
 
+// ── Log rendering with per-speaker anchors ──
 function renderLog(text, participants) {
   const el = $('log-output');
   if (!text) { el.innerHTML = ''; return; }
 
-  // Map display_name (lowercase) → speakerKey for anchor placement
+  // Build display_name (lowercase) -> speakerKey map.
+  // Sort longest-first so multi-word names don't get shadowed by a shorter prefix.
   const nameToKey = {};
   (participants || []).forEach(p => {
     nameToKey[p.display_name.toLowerCase()] = (p.username || p.display_name).toLowerCase();
   });
+  const knownNames = Object.keys(nameToKey).sort((a, b) => b.length - a.length);
+
+  // Extract the speaker key for a single log line.
+  // Speech lines have an unambiguous "Name: " delimiter.
+  // Action lines ("*Name rest") are matched against the known participant list.
+  function extractKey(line) {
+    const sm = line.match(/^\[\d{2}:\d{2}\] (.+?): /);
+    if (sm) {
+      const k = nameToKey[sm[1].toLowerCase()];
+      if (k !== undefined) return k;
+    }
+    const am = line.match(/^\[\d{2}:\d{2}\] \*(.+)$/);
+    if (am) {
+      const rest = am[1].toLowerCase();
+      for (const name of knownNames) {
+        if (rest === name || rest.startsWith(name + ' ')) return nameToKey[name];
+      }
+    }
+    return null;
+  }
 
   const seen = new Set();
   const html = text.split('\n').map(line => {
-    const actionMatch = line.match(/^(\[\d{2}:\d{2}\]) \*(.+?)( .+)?$/);
-    const speechMatch = line.match(/^(\[\d{2}:\d{2}\]) (.+?)(: )(.*)$/);
-
     let anchor = '';
-    const rawName = actionMatch ? actionMatch[2] : speechMatch ? speechMatch[2] : '';
-    if (rawName) {
-      const key = nameToKey[rawName.toLowerCase()];
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        anchor = `<span id="log-${speakerCssId(key)}"></span>`;
-      }
+    const key = extractKey(line);
+    if (key !== null && !seen.has(key)) {
+      seen.add(key);
+      anchor = '<span id="log-' + speakerCssId(key) + '"></span>';
     }
 
+    const actionMatch = line.match(/^(\[\d{2}:\d{2}\]) (\*.+)$/);
+    const speechMatch = line.match(/^(\[\d{2}:\d{2}\]) (.+?)(: )(.*)$/);
+
     if (actionMatch) {
-      const [, time, name, rest = ''] = actionMatch;
-      return `${anchor}<span class="time-tag">${escapeHtml(time)}</span> <span class="action">${escapeHtml('*' + name + rest)}</span>`;
+      const [, time, rest] = actionMatch;
+      return anchor +
+        '<span class="time-tag">' + escapeHtml(time) + '</span> ' +
+        '<span class="action">' + escapeHtml(rest) + '</span>';
     }
     if (speechMatch) {
       const [, time, name, colon, content] = speechMatch;
-      return `${anchor}<span class="time-tag">${escapeHtml(time)}</span> <span class="speaker">${escapeHtml(name)}${colon}</span>${escapeHtml(content)}`;
+      return anchor +
+        '<span class="time-tag">' + escapeHtml(time) + '</span> ' +
+        '<span class="speaker">' + escapeHtml(name) + colon + '</span>' +
+        escapeHtml(content);
     }
     return anchor + escapeHtml(line);
   }).join('\n');
@@ -489,6 +472,7 @@ function speakerCssId(key) {
   return key.replace(/[^a-z0-9]/g, '_');
 }
 
+// ── Formatters ──
 function formatMinutes(mins) {
   if (!mins) return '0m';
   const h = Math.floor(mins / 60);
@@ -518,7 +502,7 @@ function copyOutput() {
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = orig; }, 1800);
-  }).catch(() => showToast('Copy failed — try selecting and copying manually.'));
+  }).catch(() => showToast('Copy failed - try selecting and copying manually.'));
 }
 
 function downloadOutput() {
@@ -539,19 +523,15 @@ function downloadOutput() {
 function showLoading() {
   $('empty-state').style.display  = '';
   $('results-wrap').style.display = 'none';
-  $('empty-state').innerHTML = `
-    <div class="spinner"></div>
-    <p>Processing log…</p>
-  `;
+  $('empty-state').innerHTML = '<div class="spinner"></div><p>Processing log...</p>';
 }
 
 function showEmpty() {
   $('empty-state').style.display  = '';
   $('results-wrap').style.display = 'none';
-  $('empty-state').innerHTML = `
-    <div class="big-icon">📜</div>
-    <p>Paste or upload a Second Life chat log,<br>then click <strong>Clean Log</strong>.</p>
-  `;
+  $('empty-state').innerHTML =
+    '<div class="big-icon">' + String.fromCodePoint(0x1F4DC) + '</div>' +
+    '<p>Paste or upload a Second Life chat log,<br>then click <strong>Clean Log</strong>.</p>';
 }
 
 function showToast(msg) {
