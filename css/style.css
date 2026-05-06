@@ -624,6 +624,8 @@ pre#log-output {
   font-size: 12px;
   line-height: 1.7;
   color: var(--text);
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;

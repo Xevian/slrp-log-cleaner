@@ -369,6 +369,7 @@ function renderParticipantTable(participants) {
 
     const nameEl = document.createElement('span');
     nameEl.className = 'ptable-name ptable-name-link';
+    nameEl.style.cursor = 'pointer';
     nameEl.textContent = label;
     nameEl.title = 'Jump to first line';
     nameEl.addEventListener('click', () => scrollToSpeaker(speakerKey));
@@ -461,11 +462,7 @@ function renderLog(text, participants) {
 
 function scrollToSpeaker(key) {
   const anchor = document.getElementById('log-' + speakerCssId(key));
-  if (!anchor) return;
-  const pre = $('log-output');
-  const aRect = anchor.getBoundingClientRect();
-  const pRect = pre.getBoundingClientRect();
-  pre.scrollTo({ top: pre.scrollTop + aRect.top - pRect.top - 12, behavior: 'smooth' });
+  if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function speakerCssId(key) {
