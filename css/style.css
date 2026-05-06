@@ -105,6 +105,11 @@ header .repo-link:hover {
   color: var(--text-dim);
   margin-bottom: 12px;
 }
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
 /* ── Input Mode Toggle ── */
 .mode-tabs {
@@ -689,6 +694,65 @@ pre#log-output .action     { color: #9be0c0; font-style: italic; }
 @keyframes slideIn {
   from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Clickable log lines ── */
+.log-line {
+  display: block;
+  border-radius: 2px;
+}
+.log-line[data-time] {
+  cursor: pointer;
+}
+.log-line[data-time]:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Crop context menu ── */
+.crop-menu {
+  position: fixed;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  padding: 4px;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+.crop-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 6px 14px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.crop-menu-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Time range inputs ── */
+.time-input {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 3px 6px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 90px;
+  color-scheme: dark;
+}
+.time-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* ── Responsive ── */

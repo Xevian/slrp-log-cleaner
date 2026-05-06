@@ -77,6 +77,29 @@ try {
     jsonError('Parse error: ' . $e->getMessage());
 }
 
+// Time range crop (applied before filters so speakers' post counts reflect the crop)
+$timeFromStr = trim($_POST['time_from'] ?? '');
+$timeToStr   = trim($_POST['time_to']   ?? '');
+if (($timeFromStr !== '' || $timeToStr !== '') && !empty($entries)) {
+    $refDate = reset($entries)->time?->format('Y-m-d') ?? '2000-01-01';
+    $fromDt = $timeFromStr !== ''
+        ? DateTimeImmutable::createFromFormat('Y-m-d H:i', $refDate . ' ' . $timeFromStr) ?: null
+        : null;
+    $toDt = $timeToStr !== ''
+        ? DateTimeImmutable::createFromFormat('Y-m-d H:i', $refDate . ' ' . $timeToStr) ?: null
+        : null;
+    // Handle midnight crossing (e.g., 22:00 – 02:00)
+    if ($fromDt && $toDt && $toDt < $fromDt) {
+        $toDt = $toDt->modify('+1 day');
+    }
+    $entries = array_values(array_filter($entries, function ($entry) use ($fromDt, $toDt) {
+        if (!$entry->time) return true;
+        if ($fromDt && $entry->time < $fromDt) return false;
+        if ($toDt   && $entry->time > $toDt)   return false;
+        return true;
+    }));
+}
+
 $filter  = new LogFilter();
 $entries = $filter->apply($entries, $activeFilters, $customPatterns, $ignoredSpeakers);
 

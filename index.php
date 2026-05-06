@@ -72,7 +72,10 @@
 
       <!-- Ignored speakers -->
       <div class="section" id="ignored-section" style="display:none">
-        <div class="section-title">Ignored Speakers</div>
+        <div class="section-title section-title-row">
+          Ignored Speakers
+          <button id="clear-ignored-btn" class="btn btn-secondary btn-small">Clear all</button>
+        </div>
         <ul id="ignored-list" class="custom-pattern-list"></ul>
         <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">
           These speakers are hidden from the log and stats. Click a participant's checkbox to add them.
@@ -102,6 +105,16 @@
         </label>
         <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">
           Participants with fewer posts are omitted from the summary and removed from the log.
+        </p>
+        <label class="filter-item full-width" style="grid-column:unset;margin-top:10px;align-items:center">
+          <span class="filter-label" style="margin-right:8px;flex-shrink:0">Crop time range</span>
+          <input type="time" id="time-from" class="time-input">
+          <span style="margin:0 6px;color:var(--text-dim)">–</span>
+          <input type="time" id="time-to" class="time-input">
+          <button id="clear-crop-btn" class="btn btn-secondary btn-small" style="margin-left:6px" title="Clear time range">×</button>
+        </label>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Keep only entries between these times. Leave blank for no crop.
         </p>
       </div>
 

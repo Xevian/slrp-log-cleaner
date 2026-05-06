@@ -26,6 +26,7 @@ let customPatterns  = [];
 let ignoredSpeakers = [];        // [{key, label}, ...]
 let lastResult      = null;
 let droppedFile     = null;      // file from drag-and-drop
+let cropMenu        = null;      // lazy-created context menu element
 
 // ── DOM refs ──
 const $ = id => document.getElementById(id);
@@ -77,6 +78,23 @@ function bindEvents() {
   $('copy-btn').addEventListener('click', copyOutput);
   $('download-btn').addEventListener('click', downloadOutput);
   $('ignore-btn').addEventListener('click', ignoreSelected);
+  $('clear-ignored-btn').addEventListener('click', clearIgnoredSpeakers);
+  $('clear-crop-btn').addEventListener('click', clearCropTimes);
+
+  // Log line crop-click (event delegation)
+  $('log-output').addEventListener('click', e => {
+    const line = e.target.closest('.log-line[data-time]');
+    if (!line) { hideCropMenu(); return; }
+    showCropMenu(e.clientX, e.clientY, line.dataset.time);
+  });
+
+  // Dismiss crop menu on outside click or Escape
+  document.addEventListener('click', e => {
+    if (cropMenu && !cropMenu.contains(e.target)) hideCropMenu();
+  }, true);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') hideCropMenu();
+  });
 }
 
 // ── Input mode ──
@@ -195,6 +213,12 @@ function removeIgnored(idx) {
   renderIgnoredList();
 }
 
+function clearIgnoredSpeakers() {
+  ignoredSpeakers = [];
+  saveIgnoredSpeakers();
+  renderIgnoredList();
+}
+
 function renderIgnoredList() {
   const section = $('ignored-section');
   const list    = $('ignored-list');
@@ -249,6 +273,8 @@ async function submitForm() {
   formData.append('ignored_speakers', JSON.stringify(ignoredSpeakers.map(s => s.key)));
   formData.append('merge_splits',     $('merge-splits')?.checked ? '1' : '0');
   formData.append('min_posts',        parseInt($('min-posts')?.value, 10) || 2);
+  formData.append('time_from',        $('time-from')?.value || '');
+  formData.append('time_to',          $('time-to')?.value   || '');
 
   if (inputMode === 'upload') {
     const file = $('file-input').files[0] || droppedFile;
@@ -438,26 +464,73 @@ function renderLog(text, participants) {
       anchor = '<span id="log-' + speakerCssId(key) + '"></span>';
     }
 
+    const timeMatch   = line.match(/^\[(\d{2}:\d{2})\]/);
+    const timeAttr    = timeMatch ? ' data-time="' + timeMatch[1] + '"' : '';
     const actionMatch = line.match(/^(\[\d{2}:\d{2}\]) (\*.+)$/);
     const speechMatch = line.match(/^(\[\d{2}:\d{2}\]) (.+?)(: )(.*)$/);
 
+    let inner;
     if (actionMatch) {
       const [, time, rest] = actionMatch;
-      return anchor +
+      inner = anchor +
         '<span class="time-tag">' + escapeHtml(time) + '</span> ' +
         '<span class="action">' + escapeHtml(rest) + '</span>';
-    }
-    if (speechMatch) {
+    } else if (speechMatch) {
       const [, time, name, colon, content] = speechMatch;
-      return anchor +
+      inner = anchor +
         '<span class="time-tag">' + escapeHtml(time) + '</span> ' +
         '<span class="speaker">' + escapeHtml(name) + colon + '</span>' +
         escapeHtml(content);
+    } else {
+      inner = anchor + escapeHtml(line);
     }
-    return anchor + escapeHtml(line);
-  }).join('\n');
+    return '<span class="log-line"' + timeAttr + '>' + inner + '</span>';
+  }).join('');
 
   el.innerHTML = html;
+}
+
+// ── Crop context menu ──
+function showCropMenu(clientX, clientY, time) {
+  if (!cropMenu) {
+    cropMenu = document.createElement('div');
+    cropMenu.className = 'crop-menu';
+    cropMenu.innerHTML =
+      '<button class="crop-menu-btn" id="crop-set-from"></button>' +
+      '<button class="crop-menu-btn" id="crop-set-to"></button>';
+    document.body.appendChild(cropMenu);
+    cropMenu.querySelector('#crop-set-from').addEventListener('click', () => {
+      $('time-from').value = cropMenu.dataset.time;
+      hideCropMenu();
+    });
+    cropMenu.querySelector('#crop-set-to').addEventListener('click', () => {
+      $('time-to').value = cropMenu.dataset.time;
+      hideCropMenu();
+    });
+  }
+
+  cropMenu.dataset.time = time;
+  cropMenu.querySelector('#crop-set-from').textContent = '▶ Set start  ' + time;
+  cropMenu.querySelector('#crop-set-to').textContent   = '◀ Set end    ' + time;
+  cropMenu.style.display = 'flex';
+  cropMenu.style.left    = clientX + 'px';
+  cropMenu.style.top     = clientY + 'px';
+
+  // Nudge back on-screen if it overflows the viewport
+  requestAnimationFrame(() => {
+    const r = cropMenu.getBoundingClientRect();
+    if (r.right  > window.innerWidth)  cropMenu.style.left = (clientX - r.width)  + 'px';
+    if (r.bottom > window.innerHeight) cropMenu.style.top  = (clientY - r.height) + 'px';
+  });
+}
+
+function clearCropTimes() {
+  $('time-from').value = '';
+  $('time-to').value   = '';
+}
+
+function hideCropMenu() {
+  if (cropMenu) cropMenu.style.display = 'none';
 }
 
 function scrollToSpeaker(key) {
