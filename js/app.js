@@ -329,8 +329,8 @@ function renderResults(data) {
   // Summary block
   renderSummaryBlock(data);
 
-  // Log output with syntax highlights
-  $('log-output').innerHTML = highlightLog(data.cleaned_log);
+  // Log output with syntax highlights + per-speaker anchors
+  renderLog(data.cleaned_log, data.stats.participants);
 }
 
 function renderSummaryBlock(data) {
@@ -409,9 +409,10 @@ function renderParticipantTable(participants) {
     checkWrap.appendChild(cb);
 
     const nameEl = document.createElement('span');
-    nameEl.className = 'ptable-name';
+    nameEl.className = 'ptable-name ptable-name-link';
     nameEl.textContent = label;
-    nameEl.title = label;
+    nameEl.title = 'Jump to first line';
+    nameEl.addEventListener('click', () => scrollToSpeaker(speakerKey));
 
     const postsEl = document.createElement('span');
     postsEl.className = 'ptable-posts';
@@ -436,23 +437,56 @@ function renderParticipantTable(participants) {
   updateIgnoreButton();
 }
 
-function highlightLog(text) {
-  if (!text) return '';
-  const lines = text.split('\n');
-  return lines.map(line => {
-    const actionMatch = line.match(/^(\[\d{2}:\d{2}\]) (\*.+?)( .+)?$/);
+function renderLog(text, participants) {
+  const el = $('log-output');
+  if (!text) { el.innerHTML = ''; return; }
+
+  // Map display_name (lowercase) → speakerKey for anchor placement
+  const nameToKey = {};
+  (participants || []).forEach(p => {
+    nameToKey[p.display_name.toLowerCase()] = (p.username || p.display_name).toLowerCase();
+  });
+
+  const seen = new Set();
+  const html = text.split('\n').map(line => {
+    const actionMatch = line.match(/^(\[\d{2}:\d{2}\]) \*(.+?)( .+)?$/);
     const speechMatch = line.match(/^(\[\d{2}:\d{2}\]) (.+?)(: )(.*)$/);
 
+    let anchor = '';
+    const rawName = actionMatch ? actionMatch[2] : speechMatch ? speechMatch[2] : '';
+    if (rawName) {
+      const key = nameToKey[rawName.toLowerCase()];
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        anchor = `<span id="log-${speakerCssId(key)}"></span>`;
+      }
+    }
+
     if (actionMatch) {
-      const [, time, speaker, rest = ''] = actionMatch;
-      return `<span class="time-tag">${escapeHtml(time)}</span> <span class="action">${escapeHtml(speaker + rest)}</span>`;
+      const [, time, name, rest = ''] = actionMatch;
+      return `${anchor}<span class="time-tag">${escapeHtml(time)}</span> <span class="action">${escapeHtml('*' + name + rest)}</span>`;
     }
     if (speechMatch) {
-      const [, time, speaker, colon, content] = speechMatch;
-      return `<span class="time-tag">${escapeHtml(time)}</span> <span class="speaker">${escapeHtml(speaker)}${colon}</span>${escapeHtml(content)}`;
+      const [, time, name, colon, content] = speechMatch;
+      return `${anchor}<span class="time-tag">${escapeHtml(time)}</span> <span class="speaker">${escapeHtml(name)}${colon}</span>${escapeHtml(content)}`;
     }
-    return escapeHtml(line);
+    return anchor + escapeHtml(line);
   }).join('\n');
+
+  el.innerHTML = html;
+}
+
+function scrollToSpeaker(key) {
+  const anchor = document.getElementById('log-' + speakerCssId(key));
+  if (!anchor) return;
+  const pre = $('log-output');
+  const aRect = anchor.getBoundingClientRect();
+  const pRect = pre.getBoundingClientRect();
+  pre.scrollTo({ top: pre.scrollTop + aRect.top - pRect.top - 12, behavior: 'smooth' });
+}
+
+function speakerCssId(key) {
+  return key.replace(/[^a-z0-9]/g, '_');
 }
 
 function formatMinutes(mins) {

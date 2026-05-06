@@ -569,6 +569,15 @@ textarea#paste-input::placeholder {
   color: var(--text-dim);
 }
 
+.ptable-name-link {
+  cursor: pointer;
+}
+
+.ptable-name-link:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-dim);
+}
+
 .ptable-posts {
   width: 42px;
   text-align: right;
