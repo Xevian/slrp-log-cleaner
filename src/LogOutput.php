@@ -114,14 +114,15 @@ class LogOutput
     {
         $lines = [];
 
-        if ($stats['date_display'] ?? null) {
-            $lines[] = 'DATE: ' . $stats['date_display'];
+        // date_display is null for short-format logs (no date in timestamps)
+        $startDt = ($stats['start'] ?? null) ? new DateTimeImmutable($stats['start']) : null;
+        if ($startDt && $startDt->format('Y') !== '2000') {
+            $lines[] = 'DATE: ' . $startDt->format('d/m/Y');
         }
 
-        if (($stats['start'] ?? null) && ($stats['end'] ?? null)) {
-            $start = (new DateTimeImmutable($stats['start']))->format('H:i');
-            $end   = (new DateTimeImmutable($stats['end']))->format('H:i');
-            $lines[] = 'TIME: ' . $start . ' – ' . $end;
+        $endDt = ($stats['end'] ?? null) ? new DateTimeImmutable($stats['end']) : null;
+        if ($startDt && $endDt) {
+            $lines[] = 'TIME: ' . $startDt->format('H:i') . ' – ' . $endDt->format('H:i');
         }
 
         $lines[] = 'DURATION: ' . $this->formatDuration($stats['duration_minutes']);
@@ -140,19 +141,24 @@ class LogOutput
             $rows[] = [$name, $posts, $est, $arrived];
         }
 
-        // Column widths
-        $colName = max(4, ...array_map(fn($r) => mb_strlen($r[0]), $rows));
-        $colPost = max(5, ...array_map(fn($r) => strlen($r[1]), $rows));
-        $colEst  = max(3,  ...array_map(fn($r) => strlen($r[2]), $rows));
-
-        $pad = fn(string $s, int $w) => $s . str_repeat(' ', max(0, $w - mb_strlen($s)));
-
         $lines[] = 'PARTICIPANTS:';
-        $lines[] = '  ' . $pad('Name', $colName) . '  ' . str_pad('Posts', $colPost, ' ', STR_PAD_LEFT) . '  ' . $pad('Est.', $colEst) . '  Arrived';
-        $lines[] = '  ' . str_repeat('-', $colName + $colPost + $colEst + 18);
 
-        foreach ($rows as [$name, $posts, $est, $arrived]) {
-            $lines[] = '  ' . $pad($name, $colName) . '  ' . str_pad($posts, $colPost, ' ', STR_PAD_LEFT) . '  ' . $pad($est, $colEst) . '  ' . $arrived;
+        if (empty($rows)) {
+            $lines[] = '  (none above minimum post threshold)';
+        } else {
+            // Column widths
+            $colName = max(4, ...array_map(fn($r) => mb_strlen($r[0]), $rows));
+            $colPost = max(5, ...array_map(fn($r) => strlen($r[1]), $rows));
+            $colEst  = max(3, ...array_map(fn($r) => strlen($r[2]), $rows));
+
+            $pad = fn(string $s, int $w) => $s . str_repeat(' ', max(0, $w - mb_strlen($s)));
+
+            $lines[] = '  ' . $pad('Name', $colName) . '  ' . str_pad('Posts', $colPost, ' ', STR_PAD_LEFT) . '  ' . $pad('Est.', $colEst) . '  Arrived';
+            $lines[] = '  ' . str_repeat('-', $colName + $colPost + $colEst + 18);
+
+            foreach ($rows as [$name, $posts, $est, $arrived]) {
+                $lines[] = '  ' . $pad($name, $colName) . '  ' . str_pad($posts, $colPost, ' ', STR_PAD_LEFT) . '  ' . $pad($est, $colEst) . '  ' . $arrived;
+            }
         }
 
         $lines[] = '';
