@@ -48,24 +48,24 @@ $mergeSplits   = ($_POST['merge_splits'] ?? '1') === '1';
 $minPosts      = max(1, (int) ($_POST['min_posts'] ?? 2));
 $filtersJson   = $_POST['filters'] ?? '[]';
 $customJson    = $_POST['custom_filters'] ?? '[]';
+$ignoredJson   = $_POST['ignored_speakers'] ?? '[]';
 
-$activeFilters  = json_decode($filtersJson, true) ?? [];
-$customPatterns = json_decode($customJson, true) ?? [];
+$activeFilters   = json_decode($filtersJson,  true) ?? [];
+$customPatterns  = json_decode($customJson,   true) ?? [];
+$ignoredSpeakers = json_decode($ignoredJson,  true) ?? [];
 
-if (!is_array($activeFilters)) {
-    $activeFilters = [];
-}
-if (!is_array($customPatterns)) {
-    $customPatterns = [];
-}
+if (!is_array($activeFilters))   $activeFilters   = [];
+if (!is_array($customPatterns))  $customPatterns  = [];
+if (!is_array($ignoredSpeakers)) $ignoredSpeakers = [];
 
 // Resolve preset to filter list (preset overrides individual selection unless 'custom')
 if ($preset !== 'custom' && array_key_exists($preset, LogFilter::PRESETS)) {
     $activeFilters = LogFilter::PRESETS[$preset];
 }
 
-// Sanitise custom patterns — keep only strings
-$customPatterns = array_values(array_filter($customPatterns, 'is_string'));
+// Sanitise — keep only strings
+$customPatterns  = array_values(array_filter($customPatterns,  'is_string'));
+$ignoredSpeakers = array_values(array_filter($ignoredSpeakers, 'is_string'));
 
 // --- Process ---
 try {
@@ -78,7 +78,7 @@ try {
 }
 
 $filter  = new LogFilter();
-$entries = $filter->apply($entries, $activeFilters, $customPatterns);
+$entries = $filter->apply($entries, $activeFilters, $customPatterns, $ignoredSpeakers);
 
 $output = new LogOutput();
 $result = $output->generate($entries, $minPosts);

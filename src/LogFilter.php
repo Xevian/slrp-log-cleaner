@@ -49,12 +49,16 @@ class LogFilter
      * @param  LogEntry[]  $entries
      * @param  string[]    $activeFilters
      * @param  string[]    $customPatterns
+     * @param  string[]    $ignoredSpeakers  speakerKey values to remove entirely
      * @return LogEntry[]
      */
-    public function apply(array $entries, array $activeFilters, array $customPatterns = []): array
+    public function apply(array $entries, array $activeFilters, array $customPatterns = [], array $ignoredSpeakers = []): array
     {
         // Validate filter keys against whitelist
         $activeFilters = array_intersect($activeFilters, self::ALL_FILTERS);
+
+        // Normalise ignored speaker keys
+        $ignoredSpeakers = array_map('mb_strtolower', $ignoredSpeakers);
 
         // Pass 1 — mutation: strip inline OOC from content without removing entries
         if (in_array(self::FILTER_OOC_INLINE, $activeFilters, true)) {
@@ -66,6 +70,9 @@ class LogFilter
         // Pass 2 — removal
         $filtered = [];
         foreach ($entries as $entry) {
+            if (!empty($ignoredSpeakers) && in_array($entry->speakerKey(), $ignoredSpeakers, true)) {
+                continue;
+            }
             if ($this->shouldRemove($entry, $activeFilters, $customPatterns)) {
                 continue;
             }

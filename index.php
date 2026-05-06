@@ -70,6 +70,15 @@
         <div id="filter-grid" class="filter-grid"></div>
       </div>
 
+      <!-- Ignored speakers -->
+      <div class="section" id="ignored-section" style="display:none">
+        <div class="section-title">Ignored Speakers</div>
+        <ul id="ignored-list" class="custom-pattern-list"></ul>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">
+          These speakers are hidden from the log and stats. Click a participant's checkbox to add them.
+        </p>
+      </div>
+
       <!-- Custom patterns -->
       <div class="section">
         <div class="section-title">Custom Filters</div>
@@ -143,7 +152,14 @@
 
         <!-- Summary + log -->
         <div class="output-body" style="flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden;">
-          <pre id="summary-block" class="summary-block"></pre>
+          <div id="summary-block" class="summary-block">
+            <pre id="summary-header-pre" class="summary-header-pre"></pre>
+            <div id="participant-table" class="participant-table"></div>
+            <div id="ignore-bar" class="ignore-bar" style="display:none">
+              <span id="ignore-count" class="ignore-count"></span>
+              <button id="ignore-btn" class="btn btn-secondary btn-small">Ignore &amp; re-clean</button>
+            </div>
+          </div>
           <pre id="log-output"></pre>
         </div>
 
