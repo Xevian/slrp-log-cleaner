@@ -401,26 +401,26 @@ function renderLog(text, participants) {
   const el = $('log-output');
   if (!text) { el.innerHTML = ''; return; }
 
-  // Build display_name (lowercase) -> speakerKey map.
-  // Sort longest-first so multi-word names don't get shadowed by a shorter prefix.
+  // Map exact display_name -> speakerKey.
+  // Both the participant JSON and the log lines use the same PHP displayName field,
+  // so they are byte-identical — no toLowerCase() needed (which breaks Unicode names).
   const nameToKey = {};
   (participants || []).forEach(p => {
-    nameToKey[p.display_name.toLowerCase()] = (p.username || p.display_name).toLowerCase();
+    nameToKey[p.display_name] = (p.username || p.display_name).toLowerCase();
   });
+  // Sort longest-first so multi-word names don't get shadowed by a shorter prefix.
   const knownNames = Object.keys(nameToKey).sort((a, b) => b.length - a.length);
 
-  // Extract the speaker key for a single log line.
-  // Speech lines have an unambiguous "Name: " delimiter.
-  // Action lines ("*Name rest") are matched against the known participant list.
+  // Extract the speaker key for a single log line using exact string matching.
   function extractKey(line) {
+    // Speech: [HH:MM] ExactDisplayName: content
     const sm = line.match(/^\[\d{2}:\d{2}\] (.+?): /);
-    if (sm) {
-      const k = nameToKey[sm[1].toLowerCase()];
-      if (k !== undefined) return k;
-    }
+    if (sm && nameToKey[sm[1]] !== undefined) return nameToKey[sm[1]];
+
+    // Action: [HH:MM] *ExactDisplayName rest
     const am = line.match(/^\[\d{2}:\d{2}\] \*(.+)$/);
     if (am) {
-      const rest = am[1].toLowerCase();
+      const rest = am[1];
       for (const name of knownNames) {
         if (rest === name || rest.startsWith(name + ' ')) return nameToKey[name];
       }
