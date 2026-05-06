@@ -12,9 +12,17 @@ class LogOutput
      */
     public function generate(array $entries, int $minPosts = 2): array
     {
-        $stats      = $this->calculateStats($entries, $minPosts);
+        $stats = $this->calculateStats($entries, $minPosts);
+
+        // Only log lines from speakers who made it into the summary
+        $accepted = array_flip(array_map(
+            fn($p) => mb_strtolower($p['username'] ?: $p['display_name'], 'UTF-8'),
+            $stats['participants']
+        ));
+        $logEntries = array_filter($entries, fn($e) => isset($accepted[$e->speakerKey()]));
+
         $summary    = $this->buildSummary($stats);
-        $cleanedLog = $this->buildLog($entries);
+        $cleanedLog = $this->buildLog($logEntries);
 
         return [
             'summary'     => $summary,

@@ -101,7 +101,7 @@
                  style="width:52px;background:var(--panel-alt);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:3px 6px;font-size:13px;text-align:center">
         </label>
         <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">
-          Participants with fewer posts are omitted from the header (their lines remain in the log).
+          Participants with fewer posts are omitted from the summary and removed from the log.
         </p>
       </div>
 

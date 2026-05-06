@@ -139,10 +139,15 @@ class LogFilter
 
     private function isDeliveryMessage(LogEntry $entry): bool
     {
-        if (!$entry->isSystem) {
-            return false;
+        // Second Life system delivery lines
+        if ($entry->isSystem) {
+            return (bool) preg_match('/(gave you|has been redelivered|secondlife:\/\/)/iu', $entry->content);
         }
-        return (bool) preg_match('/(gave you|has been redelivered|secondlife:\/\/)/iu', $entry->content);
+        // Third-party vendor delivery bots (CasperVend, etc.)
+        if (preg_match('/^CasperVend/iu', $entry->speaker)) {
+            return true;
+        }
+        return false;
     }
 
     private function isCombatMessage(LogEntry $entry): bool
