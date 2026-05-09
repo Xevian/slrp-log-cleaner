@@ -433,7 +433,10 @@ function renderLog(text, participants) {
   // so they are byte-identical — no toLowerCase() needed (which breaks Unicode names).
   const nameToKey = {};
   (participants || []).forEach(p => {
-    nameToKey[p.display_name] = (p.username || p.display_name).toLowerCase();
+    const key = (p.username || p.display_name).toLowerCase();
+    nameToKey[p.display_name] = key;
+    // Log lines now include username: "Display Name (username): …"
+    if (p.username) nameToKey[p.display_name + ' (' + p.username + ')'] = key;
   });
   // Sort longest-first so multi-word names don't get shadowed by a shorter prefix.
   const knownNames = Object.keys(nameToKey).sort((a, b) => b.length - a.length);

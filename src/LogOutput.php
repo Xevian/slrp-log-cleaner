@@ -183,6 +183,7 @@ class LogOutput
         foreach ($entries as $entry) {
             $time    = $entry->formatTime();
             $name    = $entry->displayName;
+            if ($entry->username) $name .= ' (' . $entry->username . ')';
             $content = $entry->content;
 
             if ($entry->isAction) {
