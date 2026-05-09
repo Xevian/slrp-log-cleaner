@@ -136,36 +136,19 @@ class LogOutput
         $lines[] = 'DURATION: ' . $this->formatDuration($stats['duration_minutes']);
         $lines[] = '';
 
-        // Build participant rows first so we can measure column widths
-        $rows = [];
-        foreach ($stats['participants'] as $p) {
-            $name    = $p['display_name'];
-            if ($p['username']) $name .= ' (' . $p['username'] . ')';
-            $posts   = (string) $p['post_count'];
-            $est     = $this->formatDurationShort($p['duration_minutes']);
-            $arrived = $p['first_post']
-                ? (new DateTimeImmutable($p['first_post']))->format('H:i')
-                : '—';
-            $rows[] = [$name, $posts, $est, $arrived];
-        }
-
         $lines[] = 'PARTICIPANTS:';
 
-        if (empty($rows)) {
+        if (empty($stats['participants'])) {
             $lines[] = '  (none above minimum post threshold)';
         } else {
-            // Column widths
-            $colName = max(4, ...array_map(fn($r) => mb_strlen($r[0]), $rows));
-            $colPost = max(5, ...array_map(fn($r) => strlen($r[1]), $rows));
-            $colEst  = max(3, ...array_map(fn($r) => strlen($r[2]), $rows));
-
-            $pad = fn(string $s, int $w) => $s . str_repeat(' ', max(0, $w - mb_strlen($s)));
-
-            $lines[] = '  ' . $pad('Name', $colName) . '  ' . str_pad('Posts', $colPost, ' ', STR_PAD_LEFT) . '  ' . $pad('Est.', $colEst) . '  Arrived';
-            $lines[] = '  ' . str_repeat('-', $colName + $colPost + $colEst + 18);
-
-            foreach ($rows as [$name, $posts, $est, $arrived]) {
-                $lines[] = '  ' . $pad($name, $colName) . '  ' . str_pad($posts, $colPost, ' ', STR_PAD_LEFT) . '  ' . $pad($est, $colEst) . '  ' . $arrived;
+            foreach ($stats['participants'] as $p) {
+                $name    = $p['display_name'];
+                if ($p['username']) $name .= ' (' . $p['username'] . ')';
+                $arrived = $p['first_post']
+                    ? (new DateTimeImmutable($p['first_post']))->format('H:i')
+                    : '—';
+                $est     = $this->formatDuration($p['duration_minutes']);
+                $lines[] = '  ' . $name . ' - Posts: ' . $p['post_count'] . ' - First seen: ' . $arrived . ' - Est. ' . $est;
             }
         }
 
