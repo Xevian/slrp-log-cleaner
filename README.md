@@ -24,11 +24,11 @@ TIME: 20:35 – 01:04
 DURATION: 4 hours 29 minutes
 
 PARTICIPANTS:
-  Name                         Posts  Est.     Arrived
-  ----------------------------------------------
-  Aria Blackwood (aria.b)         15  2h 25m   21:29
-  Cael Merrow                     12  2h 22m   21:32
-  Lyra Ashfen                      8  1h 43m   22:38
+  Name                                  Posts  Est.     Arrived
+  ---------------------------------------------------
+  Aria Blackwood (aria.blackwood)          15  2h 25m   21:29
+  Cael Merrow (cael.merrow)                12  2h 22m   21:32
+  Lyra Ashfen (lyra.ashfen)                 8  1h 43m   22:38
 ```
 
 ## Requirements
